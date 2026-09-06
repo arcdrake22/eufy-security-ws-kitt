@@ -2,6 +2,12 @@ import { TypedEmitter } from "tiny-typed-emitter";
 import { TrustDevice, Cipher, EventRecordResponse, ConfirmInvite, SensorHistoryEntry, ApiResponse, HouseDetail, DeviceListResponse, StationListResponse, HouseInviteListResponse, HouseListResponse, PassportProfileResponse, User, AddUserResponse } from "./models";
 import { HTTPApiEvents, Ciphers, FullDevices, Hubs, Voices, Invites, HTTPApiRequest, HTTPApiPersistentData, LoginOptions, Schedule } from "./interfaces";
 import { EventFilterType, PublicKeyType, VerfyCodeTypes } from "./types";
+/**
+ * Eufy's APIs use both the legacy application status code 0 and the HTTP-style
+ * status code 200 for successful responses.  The Mega/v6 backend currently
+ * returns 200 for several endpoints, so both values must be accepted.
+ */
+export declare function isSuccessfulResponseCode(code: number): boolean;
 export declare class HTTPApi extends TypedEmitter<HTTPApiEvents> {
     private static apiDomainBase;
     private readonly SERVER_PUBLIC_KEY;

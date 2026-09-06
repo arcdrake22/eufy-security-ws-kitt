@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HTTPApi = void 0;
+exports.isSuccessfulResponseCode = isSuccessfulResponseCode;
 const tiny_typed_emitter_1 = require("tiny-typed-emitter");
 const i18n_iso_countries_1 = require("i18n-iso-countries");
 const i18n_iso_languages_1 = require("@cospired/i18n-iso-languages");
@@ -47,6 +48,14 @@ const utils_2 = require("./../utils");
 const error_2 = require("./error");
 const utils_3 = require("../p2p/utils");
 const logging_1 = require("../logging");
+/**
+ * Eufy's APIs use both the legacy application status code 0 and the HTTP-style
+ * status code 200 for successful responses.  The Mega/v6 backend currently
+ * returns 200 for several endpoints, so both values must be accepted.
+ */
+function isSuccessfulResponseCode(code) {
+    return code === types_1.ResponseErrorCode.CODE_OK || code === 200;
+}
 class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
     static apiDomainBase = "https://extend.eufylife.com";
     SERVER_PUBLIC_KEY = "04c5c00c4f8d1197cc7c3167c52bf7acb054d722f0ef08dcd7e0883236e0d72a3868d9750cb47fa4619248f3d83f0f662671dadc6e2d31c2f41db0161651c7c076";
@@ -185,7 +194,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
             },
         });
         const result = response.body;
-        if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+        if (isSuccessfulResponseCode(result.code)) {
             return `https://${result.data.domain}`;
         }
         throw new error_2.ApiBaseLoadError("Error identifying API base from cloud", {
@@ -455,7 +464,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
                 if (response.status == 200) {
                     const result = response.data;
                     if (result.data !== undefined) {
-                        if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                        if (isSuccessfulResponseCode(result.code)) {
                             this.loginCompleted(result.data);
                         }
                         else if (result.code == types_1.ResponseErrorCode.CODE_NEED_VERIFY_CODE) {
@@ -562,7 +571,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response != undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     logging_1.rootHTTPLogger.info(`Requested verification code for 2FA`);
                     return true;
                 }
@@ -593,7 +602,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
                 });
                 if (response.status == 200) {
                     const result = response.data;
-                    if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                    if (isSuccessfulResponseCode(result.code)) {
                         if (result.data && result.data.list) {
                             return result.data.list;
                         }
@@ -631,7 +640,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
             logging_1.rootHTTPLogger.debug("Add trust device - Response trust device", { verifyCode: verifyCode, data: response.data });
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     logging_1.rootHTTPLogger.info(`2FA authentication successfully done. Device trusted.`);
                     const trusted_devices = await this.listTrustDevice();
                     trusted_devices.forEach((trusted_device) => {
@@ -678,7 +687,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response != undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == 0) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const stationList = this.decryptAPIData(result.data);
                         logging_1.rootHTTPLogger.debug("Decrypted station list data", stationList);
@@ -717,7 +726,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response != undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == 0) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const deviceList = this.decryptAPIData(result.data);
                         logging_1.rootHTTPLogger.debug("Decrypted device list data: %s", JSON.stringify(deviceList, null, 2));
@@ -870,7 +879,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == 0) {
+                if (isSuccessfulResponseCode(result.code)) {
                     logging_1.rootHTTPLogger.debug(`Check push token - Push token OK`);
                     return true;
                 }
@@ -903,7 +912,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == 0) {
+                if (isSuccessfulResponseCode(result.code)) {
                     logging_1.rootHTTPLogger.debug(`Register push token - Push token registered successfully`);
                     return true;
                 }
@@ -951,7 +960,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
             });
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == 0) {
+                if (isSuccessfulResponseCode(result.code)) {
                     const dataresult = result.data;
                     logging_1.rootHTTPLogger.debug("Set parameter - New parameters set", { params: tmp_params, response: dataresult });
                     return true;
@@ -991,7 +1000,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const ciphers = {};
                         const decrypted = this.decryptAPIData(result.data);
@@ -1035,7 +1044,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
                 });
                 if (response.status == 200) {
                     const result = response.data;
-                    if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                    if (isSuccessfulResponseCode(result.code)) {
                         if (result.data) {
                             const voices = {};
                             result.data.forEach((voice) => {
@@ -1135,7 +1144,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
             logging_1.rootHTTPLogger.debug(`${functionName} - Response:`, response.data);
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == 0) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const dataresult = this.decryptAPIData(result.data);
                         logging_1.rootHTTPLogger.debug(`${functionName} - Decrypted data:`, dataresult);
@@ -1220,7 +1229,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data && typeof result.data === "string") {
                         const invites = {};
                         const decrypted = this.decryptAPIData(result.data);
@@ -1264,7 +1273,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     return true;
                 }
                 else {
@@ -1301,7 +1310,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
                     });
                     if (response.status == 200) {
                         const result = response.data;
-                        if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                        if (isSuccessfulResponseCode(result.code)) {
                             if (result.data) {
                                 if (type === types_1.PublicKeyType.LOCK)
                                     this.persistentData.device_public_keys[deviceSN] = result.data.public_key;
@@ -1380,7 +1389,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const entries = result.data;
                         return entries;
@@ -1417,7 +1426,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const houseDetail = this.decryptAPIData(result.data);
                         logging_1.rootHTTPLogger.debug("Get house detail - Decrypted house detail data", { details: houseDetail });
@@ -1452,7 +1461,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         logging_1.rootHTTPLogger.debug("Get house list - houses", { houses: result.data });
                         return result.data;
@@ -1485,7 +1494,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const houseInviteList = result.data;
                         logging_1.rootHTTPLogger.debug("Get house invite list - House invite list data", houseInviteList);
@@ -1524,7 +1533,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     return true;
                 }
                 else {
@@ -1559,7 +1568,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     return true;
                 }
                 else {
@@ -1595,7 +1604,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
             });
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const profile = this.decryptAPIData(result.data);
                         logging_1.rootHTTPLogger.debug("Get passport profile - Decrypted passport profile data", { profile: profile });
@@ -1638,7 +1647,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data)
                         return result.data;
                 }
@@ -1677,7 +1686,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     return true;
                 }
                 else {
@@ -1712,7 +1721,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
             });
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     if (result.data) {
                         const usersResponse = result.data;
                         return usersResponse.user_list;
@@ -1786,7 +1795,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
             if (response !== undefined) {
                 if (response.status == 200) {
                     const result = response.data;
-                    if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                    if (isSuccessfulResponseCode(result.code)) {
                         return true;
                     }
                     else {
@@ -1876,7 +1885,7 @@ class HTTPApi extends tiny_typed_emitter_1.TypedEmitter {
         if (response !== undefined) {
             if (response.status == 200) {
                 const result = response.data;
-                if (result.code == types_1.ResponseErrorCode.CODE_OK) {
+                if (isSuccessfulResponseCode(result.code)) {
                     return true;
                 }
                 else {

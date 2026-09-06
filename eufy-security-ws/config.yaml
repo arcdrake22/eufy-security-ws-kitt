@@ -1,6 +1,6 @@
 name: eufy-security-ws (KITT patch)
 description: Allows you to control Eufy security devices over websocket by connecting to the Eufy cloud servers and local/remote stations
-version: 3.1.1-kitt1
+version: 3.1.1-kitt2
 slug: "eufy_security_ws_kitt"
 url: https://github.com/arcdrake22/eufy-security-ws-kitt
 init: false

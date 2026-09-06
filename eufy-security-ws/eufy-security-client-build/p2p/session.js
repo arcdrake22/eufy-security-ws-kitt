@@ -3045,7 +3045,24 @@ class P2PClientProtocol extends tiny_typed_emitter_1.TypedEmitter {
                             message: str,
                         });
                         const image = (0, utils_3.parseJSON)(str, logging_1.rootP2PLogger);
-                        this.emit("image download", image.file, (0, utils_2.decodeImage)(this.rawStation.p2p_did, Buffer.from(image.content, "base64")));
+                        // Some devices (e.g. Video Doorbell Dual) send v2_eufysecurity-obfuscated
+                        // JPEGs here too, not only the plain baseline JPEGs this command used to
+                        // always carry, so this needs the same auto-detecting async decode
+                        // api.ts's getImage() already uses. The old sync decodeImage() assumes a
+                        // fixed 288x176 thumbnail geometry and shears/corrupts anything else
+                        // (observed: a combined dual-lens frame reconstructed at ~2x its true
+                        // width, and a wide single-lens night frame reconstructed transposed).
+                        (0, utils_2.decodeImageAsync)(this.rawStation.p2p_did, Buffer.from(image.content, "base64"))
+                            .then((decoded) => {
+                            this.emit("image download", image.file, decoded);
+                        })
+                            .catch((err) => {
+                            const error = (0, error_1.ensureError)(err);
+                            logging_1.rootP2PLogger.error(`Handle DATA ${types_1.P2PDataType[message.dataType]} - CMD_DATABASE_IMAGE - Decode error`, {
+                                error: (0, utils_3.getError)(error),
+                                stationSN: this.rawStation.station_sn,
+                            });
+                        });
                     }
                     catch (err) {
                         const error = (0, error_1.ensureError)(err);

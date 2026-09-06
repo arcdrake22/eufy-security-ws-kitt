@@ -26,8 +26,11 @@
  */
 export declare const V2_PREFIX = "v2_eufysecurity:";
 export type ChromaSubsampling = "4:2:0" | "4:2:2" | "4:4:4";
-/** Build the standard JPEG header for a given geometry by patching the template. */
-export declare function buildJpegPrefix(width: number, height: number, subsampling?: ChromaSubsampling): Buffer;
+/** Build the standard JPEG header for a given geometry by patching the template.
+ *  `qualityScale` rescales the baked-in quality-85 quantization tables — the encrypted
+ *  header we can't recover held the camera's real tables, so this is a substitute; 1
+ *  (default) keeps the original quality-85 tables byte-for-byte, unchanged from before. */
+export declare function buildJpegPrefix(width: number, height: number, subsampling?: ChromaSubsampling, qualityScale?: number): Buffer;
 /**
  * Reconstruct a viewable JPEG from a v2 blob at a *known* geometry.
  * Returns null if the input is not a v2 blob or has no plaintext tail.
